@@ -12,7 +12,7 @@ import {
     type ExportSprite,
     type Sprite,
 } from '../core';
-import { downloadBlob } from './download';
+import { downloadBlob } from '@1337exp/taoux/file';
 import { makeExample } from './example';
 import { t } from './i18n';
 import { DEFAULT_SETTINGS, DEFAULT_TOLERANCE, loadSettings, saveSettings, toDetectOptions, type KeyEntry, type Settings } from './settings';
