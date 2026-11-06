@@ -44,7 +44,7 @@ export const en = {
         empty: 'No background colour yet. Fully transparent pixels are always ignored.',
         guess: 'Find automatically',
         guessFailed: 'No single colour fills the border of the image. Pick one by hand.',
-        pick: 'Pick from image',
+        pick: 'From image',
         add: 'Add colour',
         exists: 'This colour is already in the list',
         colour: 'Background colour',

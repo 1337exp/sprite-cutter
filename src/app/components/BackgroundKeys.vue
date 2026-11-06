@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { TaoButton, TaoColorInput, TaoSlider } from '@1337exp/taoui';
+import { TaoButton, TaoColorInput, TaoDivider, TaoSlider } from '@1337exp/taoui';
 import { t } from '../i18n';
 import { useWorkspace } from '../workspace';
 
@@ -10,9 +10,10 @@ const { keys, picking, sheet, addKey, removeKey, guessKey } = useWorkspace();
     <div class="keys">
         <div class="toolbar">
             <TaoButton variant="secondary" icon="tao-search" :disabled="!sheet" @click="guessKey">{{ t('background.guess') }}</TaoButton>
-            <TaoButton v-model:pressed="picking" variant="secondary" icon="tao-eye" :disabled="!sheet">{{ t('background.pick') }}</TaoButton>
-            <TaoButton variant="secondary" icon="tao-plus" @click="addKey()">{{ t('background.add') }}</TaoButton>
+            <TaoButton v-model:pressed="picking" variant="secondary" icon="eyedropper" :disabled="!sheet">{{ t('background.pick') }}</TaoButton>
         </div>
+
+        <TaoDivider />
 
         <p v-if="!keys.length" class="muted">{{ t('background.empty') }}</p>
 
@@ -21,10 +22,14 @@ const { keys, picking, sheet, addKey, removeKey, guessKey } = useWorkspace();
 
             <label class="tolerance">
                 <span class="muted">{{ t('background.tolerance') }}</span>
-                <TaoSlider v-model="key.tolerance" :min="0" :max="100" :step="1" show-value :aria-label="t('background.tolerance')" />
+                <TaoSlider v-model="key.tolerance" :min="0" :max="100" :step="1" show-value editable :format="(v) => v + ' %'" :aria-label="t('background.tolerance')" />
             </label>
 
             <TaoButton icon="tao-close" variant="text" :aria-label="t('background.remove')" @click="removeKey(key.id)" />
+        </div>
+
+        <div>
+            <TaoButton variant="secondary" icon="tao-plus" @click="addKey()">{{ t('background.add') }}</TaoButton>
         </div>
     </div>
 </template>

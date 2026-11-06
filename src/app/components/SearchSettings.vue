@@ -39,7 +39,7 @@ const alpha = computed({
         </TaoFormField>
 
         <TaoFormField :label="t('search.minAlpha')" :hint="t('search.minAlphaHint')">
-            <TaoSlider v-model="alpha" :min="1" :max="255" show-value />
+            <TaoSlider v-model="alpha" :min="1" :max="255" show-value editable :edit-label="t('search.minAlpha')" />
         </TaoFormField>
 
         <TaoFormField :label="t('search.limit')">
