@@ -20,10 +20,20 @@ const { keys, picking, sheet, addKey, removeKey, guessKey } = useWorkspace();
         <div v-for="key in keys" :key="key.id" class="key">
             <TaoColorInput v-model="key.color" :aria-label="t('background.colour')" />
 
-            <label class="tolerance">
-                <span class="muted">{{ t('background.tolerance') }}</span>
-                <TaoSlider v-model="key.tolerance" :min="0" :max="100" :step="1" show-value editable :format="(v) => v + ' %'" :aria-label="t('background.tolerance')" />
-            </label>
+            <!-- The name rides on the bar with the value; while the value is typed, only the number is shown. -->
+            <!-- Название лежит на полосе вместе со значением; пока значение набирают, виден только номер. -->
+            <TaoSlider
+                v-model="key.tolerance"
+                class="tolerance"
+                :min="0"
+                :max="100"
+                :step="1"
+                show-value
+                editable
+                :format="(v) => `${t('background.tolerance')}: ${v} %`"
+                :aria-label="t('background.tolerance')"
+                :edit-label="`${t('background.tolerance')}, %`"
+            />
 
             <TaoButton icon="tao-close" variant="text" :aria-label="t('background.remove')" @click="removeKey(key.id)" />
         </div>
@@ -60,11 +70,7 @@ const { keys, picking, sheet, addKey, removeKey, guessKey } = useWorkspace();
 }
 
 .tolerance {
-    display: flex;
     flex: 1;
-    flex-direction: column;
-    gap: 2px;
     min-width: 0;
-    font-size: var(--tao-font-size-xs);
 }
 </style>
