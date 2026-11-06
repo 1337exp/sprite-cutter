@@ -47,7 +47,7 @@ const alpha = computed({
         </TaoFormField>
 
         <div>
-            <TaoButton variant="text" icon="tao-undo" @click="resetSettings">{{ t('search.reset') }}</TaoButton>
+            <TaoButton variant="ghost" icon="tao-undo" @click="resetSettings">{{ t('search.reset') }}</TaoButton>
         </div>
     </div>
 </template>
