@@ -10,6 +10,7 @@ import {
     toCss,
     toJson,
     type ExportSprite,
+    type Rect,
     type Sprite,
 } from '../core';
 import { downloadBlob } from '@1337exp/taoux/file';
@@ -31,7 +32,12 @@ export interface SpriteEntry {
     defaultName: string;
     name: string;
     included: boolean;
+    /** Added by a click on the picture, not found by the search; the user can remove it. / Добавлен кликом, а не найден поиском. */
+    manual?: boolean;
 }
+
+/** A GIF sheet is cut by its frames as they are, or searched like any picture. / Лист из GIF режут по кадрам или ищут, как любую картинку. */
+export type CutMode = 'frames' | 'search';
 
 const stemOf = (fileName: string): string => fileName.replace(/\.[^.]+$/, '') || 'sheet';
 
@@ -52,6 +58,10 @@ export function createWorkspace() {
     const busy = ref(false);
     const hovered = ref<number | null>(null);
     const picking = ref(false);
+    const finding = ref(false);
+    const cutMode = ref<CutMode>('frames');
+    /** Sprites that are cut by GIF frames: only when the sheet has them and the user did not ask to search. */
+    const framesMode = computed(() => !!sheet.value?.cells && cutMode.value === 'frames');
 
     const exportOptions = reactive({ basePath: '', retina: false, percent: false });
     const exporting = reactive({ running: false, done: 0, total: 0 });
@@ -66,31 +76,70 @@ export function createWorkspace() {
     let spriteCounter = 0;
     let keyCounter = 1;
     let pristineKeys = '[]';
+    let detected: Sprite[] = [];
+    let manual: Sprite[] = [];
+    let frameEntries: SpriteEntry[] = [];
 
-    function applyResult(sprites: Sprite[]): void {
-        const list: SpriteEntry[] = [];
+    const keyOf = (rect: Rect): string => `${rect.x},${rect.y},${rect.w},${rect.h}`;
 
-        for (const rect of sprites) {
-            const key = `${rect.x},${rect.y},${rect.w},${rect.h}`;
-            let entry = memory.get(key);
+    function entryFor(rect: Sprite, isManual: boolean): SpriteEntry {
+        const key = keyOf(rect);
+        let entry = memory.get(key);
 
-            if (entry) {
-                entry.rect = rect;
-            } else {
-                entry = reactive<SpriteEntry>({ key, rect, defaultName: `sprite_${spriteCounter++}`, name: '', included: true });
-                memory.set(key, entry);
-            }
+        if (entry) {
+            entry.rect = rect;
+        } else {
+            entry = reactive<SpriteEntry>({ key, rect, defaultName: `sprite_${spriteCounter++}`, name: '', included: true });
+            memory.set(key, entry);
+        }
 
-            list.push(entry);
+        entry.manual = isManual; // a sprite the search finds later is no longer "by hand"
+        return entry;
+    }
+
+    /** The found sprites, then the ones the user pointed at (unless the search found them too). */
+    function rebuild(): void {
+        const list = detected.map((rect) => entryFor(rect, false));
+        const seen = new Set(list.map((entry) => entry.key));
+
+        for (const rect of manual) {
+            if (!seen.has(keyOf(rect))) list.push(entryFor(rect, true));
         }
 
         entries.value = list;
         hovered.value = null;
     }
 
+    function applyResult(sprites: Sprite[]): void {
+        detected = sprites;
+        rebuild();
+    }
+
+    // Questions about one point: the worker answers them one by one, the page waits for its own.
+    // Вопросы про одну точку: воркер отвечает по очереди, страница ждёт своего ответа.
+    const pending = new Map<number, { resolve: (sprite: Sprite | null) => void; reject: (error: Error) => void }>();
+    let pointId = 0;
+
+    function askPoint(x: number, y: number): Promise<Sprite | null> {
+        return new Promise((resolve, reject) => {
+            const id = -++pointId; // negative: never equal to the id of a search request
+            pending.set(id, { resolve, reject });
+            worker.postMessage({ type: 'at', id, options: toDetectOptions(settings, keys.value), x, y } satisfies WorkerIn);
+        });
+    }
+
     worker.onmessage = (event: MessageEvent<WorkerOut>) => {
         const message = event.data;
-        if (message.id !== requestId) return; // an answer to a question that was already replaced
+
+        const waiting = message.type === 'found' || message.type === 'error' ? pending.get(message.id) : undefined;
+        if (waiting) {
+            pending.delete(message.id);
+            if (message.type === 'found') waiting.resolve(message.sprite);
+            else if (message.type === 'error') waiting.reject(new Error(message.message));
+            return;
+        }
+
+        if (message.type === 'found' || message.id !== requestId) return; // an answer to a question that was already replaced
 
         busy.value = false;
         if (message.type === 'result') {
@@ -110,6 +159,18 @@ export function createWorkspace() {
         const current = sheet.value;
         if (!current) return;
 
+        if (framesMode.value) {
+            // The frames are known exactly: nothing to search. A search still in flight must not overwrite them.
+            // Кадры известны точно: искать нечего. Поиск, ещё идущий, не должен их затереть.
+            requestId++;
+            lastRequest = '';
+            busy.value = false;
+            total.value = frameEntries.length;
+            entries.value = frameEntries;
+            hovered.value = null;
+            return;
+        }
+
         const options = toDetectOptions(settings, keys.value);
 
         // Watchers fire on any touch; the worker is asked only when the question really changed.
@@ -128,6 +189,10 @@ export function createWorkspace() {
     }
 
     watch([settings, keys], schedule, { deep: true });
+    watch(cutMode, () => {
+        window.clearTimeout(timer);
+        run();
+    });
     watch(settings, () => saveSettings(settings), { deep: true });
 
     // ---- opening ----------------------------------------------------------------------------------------
@@ -138,10 +203,21 @@ export function createWorkspace() {
         sheet.value = next;
         memory = new Map();
         spriteCounter = 0;
+        detected = [];
+        manual = [];
         entries.value = [];
         total.value = 0;
         hovered.value = null;
         picking.value = false;
+        finding.value = false;
+        cutMode.value = 'frames';
+        for (const waiting of pending.values()) waiting.resolve(null);
+        pending.clear();
+
+        frameEntries = (next.cells ?? []).map((rect, i) => {
+            const key = keyOf(rect);
+            return reactive<SpriteEntry>({ key, rect: { ...rect, pixels: rect.w * rect.h }, defaultName: `frame_${i}`, name: '', included: true });
+        });
 
         // An opaque picture is useless without its background colour, so the first guess is made for the user.
         // Непрозрачная картинка бесполезна без цвета фона, поэтому первую догадку делаем за пользователя.
@@ -161,7 +237,7 @@ export function createWorkspace() {
      */
     function hasWork(): boolean {
         if (!sheet.value) return false;
-        const touched = [...memory.values()].some((entry) => entry.name !== '' || !entry.included);
+        const touched = [...memory.values(), ...frameEntries].some((entry) => entry.name !== '' || !entry.included) || manual.length > 0;
         const keysNow = JSON.stringify(keys.value.map(({ color, tolerance }) => ({ color, tolerance })));
         return touched || keysNow !== pristineKeys;
     }
@@ -234,6 +310,69 @@ export function createWorkspace() {
         }
         addKey(formatHex([data[i]!, data[i + 1]!, data[i + 2]!]));
     }
+
+    // ---- a sprite by a click ----------------------------------------------------------------------------
+
+    /**
+     * The "find by click" tool: the sprite under the clicked pixel is added whatever the size limits say, with the
+     * current background colours, alpha and gap. The tool stays armed, so several can be added in a row.
+     * Инструмент «найти кликом»: спрайт под пикселем добавляется, что бы ни говорили ограничения по размеру, с
+     * текущими цветами фона, альфой и зазором. Инструмент остаётся включённым: можно добавить несколько подряд.
+     */
+    async function findAt(x: number, y: number): Promise<void> {
+        const current = sheet.value;
+        if (!current || framesMode.value || x < 0 || y < 0 || x >= current.image.width || y >= current.image.height) return;
+
+        let rect: Sprite | null;
+        try {
+            rect = await askPoint(x, y);
+        } catch (error) {
+            toast().danger().message(t('sprites.failed', [error instanceof Error ? error.message : String(error)]));
+            return;
+        }
+        if (sheet.value !== current) return; // another sheet was opened while the worker was thinking
+
+        if (!rect) {
+            toast().info().short().message(t('find.nothing'));
+            return;
+        }
+
+        const key = keyOf(rect);
+        const known = entries.value.findIndex((entry) => entry.key === key);
+        if (known >= 0) {
+            hovered.value = known;
+            toast().info().short().message(t('find.known'));
+            return;
+        }
+
+        manual = [...manual, rect];
+        rebuild();
+        hovered.value = entries.value.findIndex((entry) => entry.key === key);
+    }
+
+    function removeManual(entry: SpriteEntry): void {
+        manual = manual.filter((rect) => keyOf(rect) !== entry.key);
+        memory.delete(entry.key);
+        rebuild();
+    }
+
+    /** A click on the picture while a tool is armed. / Клик по картинке при включённом инструменте. */
+    function clickAt(x: number, y: number): void {
+        if (picking.value) pickColor(x, y);
+        else if (finding.value) void findAt(x, y);
+    }
+
+    // One tool at a time; the frames of a GIF need none.
+    // Один инструмент за раз; кадрам GIF они не нужны.
+    watch(picking, (on) => {
+        if (on) finding.value = false;
+    });
+    watch(finding, (on) => {
+        if (on) picking.value = false;
+    });
+    watch(framesMode, (on) => {
+        if (on) finding.value = false;
+    });
 
     // ---- the sprites ------------------------------------------------------------------------------------
 
@@ -344,10 +483,15 @@ export function createWorkspace() {
         busy,
         hovered,
         picking,
+        finding,
+        cutMode,
+        framesMode,
         exportOptions,
         exporting,
         json,
         css,
+        clickAt,
+        removeManual,
         openFile,
         openExample,
         addKey,

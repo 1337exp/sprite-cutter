@@ -5,11 +5,14 @@ import { t } from '../i18n';
 import { useWorkspace } from '../workspace';
 import SpriteThumb from './SpriteThumb.vue';
 
-const { sheet, entries, selected, total, busy, hovered, setAll, setHovered, downloadSprite, copySprite } = useWorkspace();
+const { sheet, entries, selected, total, busy, hovered, setAll, setHovered, downloadSprite, copySprite, removeManual } = useWorkspace();
 
 const allChecked = computed(() => entries.value.length > 0 && selected.value.length === entries.value.length);
 const someChecked = computed(() => selected.value.length > 0 && !allChecked.value);
-const capped = computed(() => total.value > entries.value.length);
+// Sprites added by a click are not part of what the search found, so they do not count towards its limit.
+// Спрайты, добавленные кликом, не входят в то, что нашёл поиск, и в его предел не считаются.
+const found = computed(() => entries.value.filter((entry) => !entry.manual).length);
+const capped = computed(() => total.value > found.value);
 </script>
 
 <template>
@@ -25,7 +28,7 @@ const capped = computed(() => total.value > entries.value.length);
         <template v-else-if="sheet">
             <TaoCheckbox :model-value="allChecked" :indeterminate="someChecked" :label="t('sprites.selectAll')" @update:model-value="setAll" />
 
-            <TaoAlert v-if="capped" tone="info">{{ t('sprites.capped', [entries.length, total]) }}</TaoAlert>
+            <TaoAlert v-if="capped" tone="info">{{ t('sprites.capped', [found, total]) }}</TaoAlert>
 
             <TaoList :max-height="320" :aria-label="t('sprites.title')">
                 <TaoListItem
@@ -45,9 +48,12 @@ const capped = computed(() => total.value > entries.value.length);
 
                     <TaoInput v-model="entry.name" variant="plain" :placeholder="entry.defaultName" :aria-label="t('sprites.name')" />
 
-                    <template #description>{{ entry.rect.x }}, {{ entry.rect.y }} · {{ entry.rect.w }} × {{ entry.rect.h }}</template>
+                    <template #description>
+                        {{ entry.rect.x }}, {{ entry.rect.y }} · {{ entry.rect.w }} × {{ entry.rect.h }}<template v-if="entry.manual"> · {{ t('find.manual') }}</template>
+                    </template>
 
                     <template #action>
+                        <TaoButton v-if="entry.manual" icon="tao-close" variant="text" :aria-label="t('find.remove')" :title="t('find.remove')" @click="removeManual(entry)" />
                         <TaoButton icon="tao-copy" variant="text" :aria-label="t('sprites.copy')" :title="t('sprites.copy')" @click="copySprite(entry)" />
                         <TaoButton icon="tao-arrow-down" variant="text" :aria-label="t('sprites.download')" :title="t('sprites.download')" @click="downloadSprite(entry)" />
                     </template>

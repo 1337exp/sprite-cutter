@@ -1,4 +1,4 @@
-import { detectSprites } from '../../core/detect';
+import { analyze, detectSprites, spriteAt } from '../../core/detect';
 import type { ImageLike } from '../../core/types';
 import type { WorkerIn, WorkerOut } from './protocol';
 
@@ -21,6 +21,14 @@ scope.onmessage = (event) => {
 
     try {
         if (!image) throw new Error('No image has been sent yet');
+        if (message.type === 'at') {
+            // The sprite under the click, whatever its size: the size limits are for the automatic search only.
+            // Спрайт под кликом, любого размера: ограничения по размеру только для автоматического поиска.
+            const { keys, minAlpha, gap } = message.options;
+            scope.postMessage({ type: 'found', id: message.id, sprite: spriteAt(analyze(image, { keys, minAlpha, gap }), message.x, message.y) });
+            return;
+        }
+
         const { sprites, total } = detectSprites(image, message.options);
         scope.postMessage({ type: 'result', id: message.id, sprites, total });
     } catch (error) {

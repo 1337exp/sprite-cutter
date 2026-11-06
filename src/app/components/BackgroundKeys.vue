@@ -10,7 +10,7 @@ const { keys, picking, sheet, addKey, removeKey, guessKey } = useWorkspace();
     <div class="keys">
         <div class="toolbar">
             <TaoButton variant="secondary" icon="tao-search" :disabled="!sheet" @click="guessKey">{{ t('background.guess') }}</TaoButton>
-            <TaoButton v-model:pressed="picking" variant="secondary" icon="eyedropper" :disabled="!sheet">{{ t('background.pick') }}</TaoButton>
+            <TaoButton v-model:pressed="picking" variant="secondary" icon="eyedropper" :disabled="!sheet" :title="`${t('background.pick')} (I)`">{{ t('background.pick') }}</TaoButton>
         </div>
 
         <TaoDivider />

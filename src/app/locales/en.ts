@@ -22,7 +22,22 @@ export const en = {
         fit: 'Fit to window',
         hint: 'Wheel: move · Ctrl + wheel: zoom · drag: pan · click a frame: include or exclude',
         picking: 'Click a pixel to make its colour the background',
+        finding: 'Click a sprite to add it to the list, whatever its size',
     },
+    find: {
+        tool: 'Find by click',
+        nothing: 'Background here: no sprite',
+        known: 'This sprite is already in the list',
+        remove: 'Remove this sprite',
+        manual: 'added by click',
+    },
+    cut: {
+        label: 'How to cut',
+        frames: 'GIF frames',
+        search: 'Search',
+        framesNote: 'Every frame of the GIF is a sprite, cut exactly where it was laid out. Switch to Search to look for shapes inside the frames.',
+    },
+    keys: 'F fit · 1 actual size · I pipette · P find by click · Ctrl+A select all · Ctrl+S ZIP · Esc drop the tool',
     tabs: {
         search: 'Search',
         background: 'Background',

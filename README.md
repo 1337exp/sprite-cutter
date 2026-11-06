@@ -23,15 +23,17 @@ npm run screenshot  # docs/media/*.png for the README, needs Chrome or Edge
 
 ## What it does
 
-- **Opens** a PNG, JPEG, WebP or GIF by drop or click (up to 32 megapixels). A GIF is unpacked frame by frame, with disposal modes, and laid out on a sheet.
+- **Opens** a PNG, JPEG, WebP or GIF by drop or click (up to 32 megapixels). A GIF is unpacked frame by frame, with disposal modes, and laid out on a sheet; every frame is a sprite exactly where it was laid out (switch to *Search* to look for shapes inside the frames instead).
 - **Finds sprites** as groups of touching pixels. The background is one or several colours, each with its own tolerance; fully transparent pixels are always ignored.
   *Find automatically* reads the colour from the border of the image, *From image* picks it with a click.
 - **Search settings:** the smallest and largest size, the gap inside a sprite (empty pixels that may separate parts of one sprite), the faintest alpha that still counts, the limit.
   Sprites are numbered in reading order, rows first.
+- **Find by click** adds the sprite under a clicked pixel whatever the size limits say, with the current colours, alpha and gap. Handy for a sprite the search skipped; the ones added by hand can be removed.
 - **Shows** the sheet with zoom and pan (wheel to move, Ctrl + wheel to zoom, drag to pan). A click on a frame includes or excludes the sprite.
 - **Exports** a ZIP: every sprite as `sprites/<name>.png`, `spritesheet.json`, `spritesheet.css` (retina halves, positions in percent if you like) and, when the sheet is not a file (a GIF or the example), the sheet itself.
   JSON and CSS can also be copied from the panel. Names can be edited and are made safe for every file system.
 - **Sliders you can type into:** right click, double click, or Enter / F2 on a focused slider opens a field right on the bar.
+- **Keys** (they work on any keyboard layout): `F` fit, `1` actual size, `I` pipette, `P` find by click, `Esc` drops the tool, `Ctrl+A` select all, `Ctrl+S` download the ZIP.
 - English and Russian, light and dark theme.
 
 ## How it is built
@@ -51,7 +53,7 @@ The GIF decoder is a trimmed fork of [omggif](https://github.com/deanm/omggif), 
 
 ## Not yet
 
-Search zones (a region of the sheet to look in), detection of one sprite by a click, undo, hotkeys, pinch zoom on touch screens.
+Search zones (a region of the sheet to look in), undo, pinch zoom on touch screens.
 
 ## License
 

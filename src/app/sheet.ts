@@ -1,4 +1,4 @@
-import { decodeGif, framesToSheet, isGif } from '../core';
+import { decodeGif, framesToSheet, isGif, type Rect } from '../core';
 
 export interface Pixels {
     readonly width: number;
@@ -24,6 +24,8 @@ export interface LoadedSheet {
     includeSheet: boolean;
     /** How many GIF frames were laid out, 0 for a picture. / Сколько кадров GIF разложено, 0 для картинки. */
     gifFrames: number;
+    /** Where each GIF frame sits on the sheet, in frame order; null for a picture. / Где лежит каждый кадр GIF; null для картинки. */
+    cells: Rect[] | null;
 }
 
 export type SheetErrorCode = 'notImage' | 'tooBig';
@@ -61,7 +63,7 @@ export function canvasFor(image: Pixels): HTMLCanvasElement {
 
 export function makeSheet(
     image: Pixels,
-    meta: Pick<LoadedSheet, 'fileName' | 'imageName' | 'includeSheet'> & { gifFrames?: number; canvas?: HTMLCanvasElement },
+    meta: Pick<LoadedSheet, 'fileName' | 'imageName' | 'includeSheet'> & { gifFrames?: number; cells?: Rect[]; canvas?: HTMLCanvasElement },
 ): LoadedSheet {
     return {
         id: nextId++,
@@ -71,6 +73,7 @@ export function makeSheet(
         imageName: meta.imageName,
         includeSheet: meta.includeSheet,
         gifFrames: meta.gifFrames ?? 0,
+        cells: meta.cells ?? null,
     };
 }
 
@@ -102,7 +105,7 @@ export async function loadSheet(file: File): Promise<LoadedSheet> {
             assertSize(sheet.width, sheet.height);
             const stem = file.name.replace(/\.[^.]+$/, '') || 'sheet';
             const pixels = { width: sheet.width, height: sheet.height, data: new Uint8ClampedArray(sheet.data) };
-            return makeSheet(pixels, { fileName: file.name, imageName: `${stem}.png`, includeSheet: true, gifFrames: gif.frames.length });
+            return makeSheet(pixels, { fileName: file.name, imageName: `${stem}.png`, includeSheet: true, gifFrames: gif.frames.length, cells: sheet.cells });
         }
 
         // One frame is a picture like any other, and the user keeps the file the CSS points to.

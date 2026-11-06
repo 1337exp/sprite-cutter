@@ -4,7 +4,7 @@ import { computed } from 'vue';
 import { t } from '../i18n';
 import { useWorkspace } from '../workspace';
 
-const { settings, resetSettings } = useWorkspace();
+const { settings, sheet, finding, resetSettings } = useWorkspace();
 
 // The slider cannot be empty, the setting can: an empty setting means the core's default, 1.
 // Бегунок не бывает пустым, настройка бывает: пустая настройка значит умолчание ядра, 1.
@@ -46,7 +46,8 @@ const alpha = computed({
             <TaoInputNumber v-model="settings.limit" :min="1" :max="5000" />
         </TaoFormField>
 
-        <div>
+        <div class="actions">
+            <TaoButton v-model:pressed="finding" variant="secondary" icon="target" :disabled="!sheet" :title="`${t('find.tool')} (P)`">{{ t('find.tool') }}</TaoButton>
             <TaoButton variant="ghost" icon="tao-undo" @click="resetSettings">{{ t('search.reset') }}</TaoButton>
         </div>
     </div>
@@ -63,6 +64,12 @@ const alpha = computed({
 .pair {
     display: flex;
     align-items: center;
+    gap: 8px;
+}
+
+.actions {
+    display: flex;
+    flex-wrap: wrap;
     gap: 8px;
 }
 

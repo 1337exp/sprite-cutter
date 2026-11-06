@@ -14,7 +14,10 @@ const workspace = createWorkspace();
 provide(WORKSPACE, workspace);
 onBeforeUnmount(workspace.dispose);
 
-const { sheet, entries, hovered, picking, keys, openFile, openExample, toggle, setHovered, pickColor } = workspace;
+const { sheet, entries, hovered, picking, finding, cutMode, framesMode, keys, selected, exporting, openFile, openExample, toggle, setHovered, clickAt, setAll, downloadZip } =
+    workspace;
+
+const viewport = ref<InstanceType<typeof SheetViewport> | null>(null);
 
 // ---- opening a file ---------------------------------------------------------------------------------------
 
@@ -60,6 +63,60 @@ function setLanguage(value: string | number | boolean): void {
 function setMode(value: Mode): void {
     mode.value = value;
 }
+
+function setCut(value: string | number | boolean): void {
+    cutMode.value = value === 'search' ? 'search' : 'frames';
+}
+
+// ---- the keyboard -----------------------------------------------------------------------------------------
+
+// `code`, not `key`: the letters work on any keyboard layout.
+// `code`, а не `key`: буквы работают в любой раскладке.
+function onKeydown(event: KeyboardEvent): void {
+    if (event.defaultPrevented || event.repeat || event.altKey) return;
+
+    const target = event.target instanceof HTMLElement ? event.target : null;
+    if (target?.closest('input, textarea, select, [contenteditable=""], [contenteditable="true"], [role=dialog], [role=alertdialog]')) return;
+
+    const withCtrl = event.ctrlKey || event.metaKey;
+
+    if (withCtrl && !event.shiftKey) {
+        if (event.code === 'KeyA') {
+            event.preventDefault();
+            if (entries.value.length) setAll(true);
+        } else if (event.code === 'KeyS') {
+            event.preventDefault();
+            if (selected.value.length && !exporting.running) void downloadZip();
+        }
+        return;
+    }
+    if (withCtrl || event.shiftKey) return;
+
+    switch (event.code) {
+        case 'KeyF':
+            viewport.value?.fit();
+            break;
+        case 'Digit1':
+            viewport.value?.actual();
+            break;
+        case 'KeyI':
+            if (sheet.value) picking.value = !picking.value;
+            break;
+        case 'KeyP':
+            if (sheet.value && !framesMode.value) finding.value = !finding.value;
+            break;
+        case 'Escape':
+            picking.value = false;
+            finding.value = false;
+            break;
+        default:
+            return;
+    }
+    event.preventDefault();
+}
+
+window.addEventListener('keydown', onKeydown);
+onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
 </script>
 
 <template>
@@ -88,24 +145,32 @@ function setMode(value: Mode): void {
                 </div>
 
                 <SheetViewport
+                    ref="viewport"
                     class="view"
                     :sheet="sheet"
                     :entries="entries"
                     :hovered="hovered"
-                    :picking="picking"
+                    :picking="picking || finding"
                     @toggle="toggle"
                     @hover="setHovered"
-                    @pick="pickColor"
+                    @pick="clickAt"
                     @open="openFile"
                 />
 
-                <p class="hint">{{ picking ? t('viewport.picking') : t('viewport.hint') }}</p>
+                <p class="hint">{{ picking ? t('viewport.picking') : finding ? t('viewport.finding') : t('viewport.hint') }}</p>
+                <p class="hint keys">{{ t('keys') }}</p>
                 <p v-if="info" class="info">{{ info }}</p>
             </section>
 
             <aside class="side">
                 <section class="panel">
-                    <TaoTabs v-model="tab" :items="tabs">
+                    <TaoSegmented v-if="sheet?.cells" class="cut" :model-value="cutMode" :aria-label="t('cut.label')" @update:model-value="setCut">
+                        <TaoSegmentedOption value="frames" :label="t('cut.frames')" />
+                        <TaoSegmentedOption value="search" :label="t('cut.search')" />
+                    </TaoSegmented>
+
+                    <p v-if="framesMode" class="note">{{ t('cut.framesNote') }}</p>
+                    <TaoTabs v-else v-model="tab" :items="tabs">
                         <SearchSettings v-if="tab === 'search'" />
                         <BackgroundKeys v-else />
                     </TaoTabs>
@@ -194,6 +259,15 @@ function setMode(value: Mode): void {
 
 .info {
     font-family: var(--tao-font-family-mono, monospace);
+}
+
+.cut {
+    margin-bottom: 12px;
+}
+
+.note {
+    margin: 0;
+    color: var(--tao-color-text-muted);
 }
 
 .side {

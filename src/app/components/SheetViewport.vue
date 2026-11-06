@@ -59,6 +59,17 @@ function fit(): void {
     camera.value = { z, x: (size.value.w - width * z) / 2, y: (size.value.h - height * z) / 2 };
 }
 
+/**
+ * Real size (100%) around the middle of what is shown.
+ * Реальный размер (100%) вокруг середины того, что показано.
+ */
+function actual(): void {
+    if (!props.sheet) return;
+    camera.value = zoomAt(camera.value, size.value.w / 2, size.value.h / 2, 1 / camera.value.z, LIMITS);
+}
+
+defineExpose({ fit, actual });
+
 watch(
     [() => props.sheet, host],
     ([sheet, element]) => {
