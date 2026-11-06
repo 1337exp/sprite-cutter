@@ -58,3 +58,7 @@ Search zones (a region of the sheet to look in), undo, pinch zoom on touch scree
 ## License
 
 [MIT](LICENSE)
+
+## Us
+
+Homepage: [666.io](https://666.io). If you want to help, suggest an idea or just talk, come by.
