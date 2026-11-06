@@ -1,0 +1,30 @@
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+}
+
+:root {
+    /* the dark squares of the transparency checkerboard: text colour mixed into the surface, so it reads in every theme */
+    --checker: color-mix(in srgb, var(--tao-color-text) 14%, var(--tao-color-surface));
+}
+
+body {
+    background: var(--tao-color-bg);
+    color: var(--tao-color-text);
+    font-family: var(--tao-font-family-base, system-ui, sans-serif);
+    font-size: var(--tao-font-size-md, 14px);
+    line-height: 1.4;
+}
+
+.panel {
+    padding: 12px;
+    border: 1px solid var(--tao-color-border);
+    border-radius: var(--tao-radius-panel);
+    background: var(--tao-color-surface);
+}

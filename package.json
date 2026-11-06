@@ -1,0 +1,28 @@
+{
+  "name": "sprite-cutter",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Cut sprites out of a sheet in the browser: finds them by colour key and tolerance, unpacks GIF, exports JSON / CSS / ZIP.",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.core.json && vue-tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.10",
+    "typescript": "~6.0.3",
+    "vite": "^8.3.6",
+    "vitest": "^5.1.0",
+    "vue-tsc": "^3.3.14"
+  },
+  "dependencies": {
+    "@1337exp/taoui": "^5.28.0",
+    "@1337exp/taoux": "^0.7.1",
+    "vue": "^3.5.45"
+  }
+}
