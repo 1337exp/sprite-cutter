@@ -63,7 +63,7 @@ function setMode(value: Mode): void {
 </script>
 
 <template>
-    <div class="app">
+    <div class="app tao-density-auto">
         <header class="top">
             <div class="brand">
                 <h1>{{ t('app.title') }}</h1>
@@ -71,17 +71,17 @@ function setMode(value: Mode): void {
             </div>
 
             <div class="switches">
-                <TaoSegmented :model-value="locale" size="small" :aria-label="t('app.language')" @update:model-value="setLanguage">
+                <TaoSegmented :model-value="locale" :aria-label="t('app.language')" @update:model-value="setLanguage">
                     <TaoSegmentedOption v-for="code in i18n.codes" :key="code" :value="code" :label="code.toUpperCase()" />
                 </TaoSegmented>
-                <TaoThemeToggle :model-value="mode" :apply="false" size="small" @update:model-value="setMode" />
+                <TaoThemeToggle :model-value="mode" :apply="false" @update:model-value="setMode" />
             </div>
         </header>
 
         <main class="main">
             <section class="stage">
                 <div class="open">
-                    <TaoFileDrop v-model="files" class="drop" accept="image/*" size="small" :list="false" @reject="onReject">
+                    <TaoFileDrop v-model="files" class="drop" accept="image/*" :list="false" @reject="onReject">
                         {{ t('open.drop') }}
                     </TaoFileDrop>
                     <TaoButton variant="secondary" @click="openExample">{{ t('open.example') }}</TaoButton>
@@ -103,7 +103,7 @@ function setMode(value: Mode): void {
                 <p v-if="info" class="info">{{ info }}</p>
             </section>
 
-            <aside class="side tao-size-small">
+            <aside class="side">
                 <section class="panel">
                     <TaoTabs v-model="tab" :items="tabs">
                         <SearchSettings v-if="tab === 'search'" />

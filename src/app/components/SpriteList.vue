@@ -27,7 +27,7 @@ const capped = computed(() => total.value > entries.value.length);
 
             <TaoAlert v-if="capped" tone="info">{{ t('sprites.capped', [entries.length, total]) }}</TaoAlert>
 
-            <TaoList size="small" :max-height="320" :aria-label="t('sprites.title')">
+            <TaoList :max-height="320" :aria-label="t('sprites.title')">
                 <TaoListItem
                     v-for="(entry, i) in entries"
                     :key="entry.key"
@@ -48,8 +48,8 @@ const capped = computed(() => total.value > entries.value.length);
                     <template #description>{{ entry.rect.x }}, {{ entry.rect.y }} · {{ entry.rect.w }} × {{ entry.rect.h }}</template>
 
                     <template #action>
-                        <TaoButton icon="tao-copy" variant="text" size="small" :aria-label="t('sprites.copy')" :title="t('sprites.copy')" @click="copySprite(entry)" />
-                        <TaoButton icon="tao-arrow-down" variant="text" size="small" :aria-label="t('sprites.download')" :title="t('sprites.download')" @click="downloadSprite(entry)" />
+                        <TaoButton icon="tao-copy" variant="text" :aria-label="t('sprites.copy')" :title="t('sprites.copy')" @click="copySprite(entry)" />
+                        <TaoButton icon="tao-arrow-down" variant="text" :aria-label="t('sprites.download')" :title="t('sprites.download')" @click="downloadSprite(entry)" />
                     </template>
                 </TaoListItem>
             </TaoList>

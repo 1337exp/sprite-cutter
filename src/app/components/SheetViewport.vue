@@ -233,7 +233,7 @@ function onDrop(event: DragEvent): void {
             <span class="readout">
                 {{ zoomText }}<template v-if="pointer"> · {{ pointer.x }}, {{ pointer.y }}</template>
             </span>
-            <TaoButton size="small" variant="secondary" :title="t('viewport.fit')" @click="fit">{{ t('viewport.fit') }}</TaoButton>
+            <TaoButton variant="secondary" :title="t('viewport.fit')" @click="fit">{{ t('viewport.fit') }}</TaoButton>
         </div>
     </div>
 </template>

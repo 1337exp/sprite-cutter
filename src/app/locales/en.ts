@@ -10,6 +10,8 @@ export const en = {
         failed: 'Could not open this file',
         notImage: 'This is not an image',
         tooBig: 'This image is too big: {0} megapixels, the limit is {1}',
+        replaceTitle: 'Replace the current sheet?',
+        replaceMessage: 'The names you typed, the sprites you unchecked and the background colours will be lost.',
     },
     sheet: {
         size: '{0} × {1} px',

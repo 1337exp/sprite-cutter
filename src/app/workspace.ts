@@ -1,4 +1,4 @@
-import { toast } from '@1337exp/taoui';
+import { confirm, toast } from '@1337exp/taoui';
 import { computed, inject, reactive, ref, shallowRef, watch, type InjectionKey } from 'vue';
 import {
     buildArchive,
@@ -65,6 +65,7 @@ export function createWorkspace() {
     let memory = new Map<string, SpriteEntry>();
     let spriteCounter = 0;
     let keyCounter = 1;
+    let pristineKeys = '[]';
 
     function applyResult(sprites: Sprite[]): void {
         const list: SpriteEntry[] = [];
@@ -146,6 +147,7 @@ export function createWorkspace() {
         // Непрозрачная картинка бесполезна без цвета фона, поэтому первую догадку делаем за пользователя.
         const background = guessBackground(next.image);
         keys.value = background ? [{ id: keyCounter++, color: formatHex(background), tolerance: DEFAULT_TOLERANCE }] : [];
+        pristineKeys = JSON.stringify(keys.value.map(({ color, tolerance }) => ({ color, tolerance })));
 
         const copy = next.image.data.slice();
         worker.postMessage({ type: 'image', width: next.image.width, height: next.image.height, buffer: copy.buffer } satisfies WorkerIn, [copy.buffer]);
@@ -153,9 +155,26 @@ export function createWorkspace() {
         run();
     }
 
+    /**
+     * Whether opening another sheet would throw away work: a name typed, a sprite unchecked, a background colour changed.
+     * Открытие другого листа выбросило бы работу: набранное имя, снятую галочку, изменённый цвет фона.
+     */
+    function hasWork(): boolean {
+        if (!sheet.value) return false;
+        const touched = [...memory.values()].some((entry) => entry.name !== '' || !entry.included);
+        const keysNow = JSON.stringify(keys.value.map(({ color, tolerance }) => ({ color, tolerance })));
+        return touched || keysNow !== pristineKeys;
+    }
+
+    async function confirmReplace(): Promise<boolean> {
+        if (!hasWork()) return true;
+        return await confirm().title(t('open.replaceTitle')).message(t('open.replaceMessage')).danger();
+    }
+
     async function openFile(file: File): Promise<void> {
+        let loaded: LoadedSheet;
         try {
-            setSheet(await loadSheet(file));
+            loaded = await loadSheet(file); // a file that cannot be read must not cost the user the project
         } catch (error) {
             const message =
                 error instanceof SheetError
@@ -164,11 +183,14 @@ export function createWorkspace() {
                         : t('open.notImage')
                     : t('open.failed');
             toast().danger().message(message);
+            return;
         }
+
+        if (await confirmReplace()) setSheet(loaded);
     }
 
-    function openExample(): void {
-        setSheet(makeExample());
+    async function openExample(): Promise<void> {
+        if (await confirmReplace()) setSheet(makeExample());
     }
 
     // ---- background colours -----------------------------------------------------------------------------
