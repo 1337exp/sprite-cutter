@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /**
- * Screenshots of the app for the README: the sheet with its sprites found, the Background tab with a tolerance typed in
- * place, and the Russian light theme.
+ * Screenshots of the app for the README (both languages share them): the sheet with its sprites found, and the
+ * Background tab with a tolerance typed in place.
  *
  *   npm run screenshot                                         starts its own dev server on a spare port
  *   SCREENSHOT_URL=http://localhost:5173 npm run screenshot    use a server that is already running
  *
  * Needs Chrome or Edge installed (driven through playwright-core, nothing is downloaded).
- * Output: docs/media/sheet.png, background.png, light-ru.png. The example sheet is drawn in code, so every run is the same.
+ * Output: docs/media/sheet.png, background.png. The example sheet is drawn in code, so every run is the same.
  */
 import { spawn } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
@@ -91,13 +91,6 @@ try {
         await page.waitForTimeout(200);
         await shot(page, 'background');
         await page.keyboard.press('Escape');
-        await page.context().close();
-    }
-
-    // 3. Russian, light theme.
-    {
-        const page = await open('ru-RU', 'light');
-        await shot(page, 'light-ru');
         await page.context().close();
     }
 } finally {
